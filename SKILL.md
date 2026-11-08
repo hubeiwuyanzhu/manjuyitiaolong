@@ -231,6 +231,25 @@ POST {地址}/api/agent/short-video
 
 **原有台词一个字都不能改**，你改的是画面描述和结构。
 
+### 人物图与音色（缺的时候才做）
+
+**出图**：人物 `hasPicture=false` → 写描述（`references/02-image-desc-spec.md`）→ `savePeopleDesc` → `generatePeoplePicture`。场景同理。
+
+**音色**（用户说"优化音色"就走这条）：
+
+1. `GET {地址}/api/agent/voices` 看库里现有哪些（别瞎编名字）
+2. 按 `references/03-voice-desc-spec.md` 写音色描述（性别/年龄/音色质感/语速/情绪）+ 一句该角色会说的原话
+3. `POST {地址}/util/voiceDesign` → 拿 taskId
+4. 每 20 秒 `GET {地址}/api/agent/voice/result?taskId=…` 直到 `done=true`
+5. `POST {地址}/util/voiceDesign/saveToLibrary` 入库，`name` 用「角色名-特征」
+6. `POST {地址}/api/agent/people/{peopleId}/voice` 绑定，`soundName` = 第 5 步的入库文件名
+
+**要点**：
+
+- 音色**不能编辑，只能重新生成**。旧音色还在库里，随时能换回来 —— 告诉用户这点，他就敢试。
+- 一个人只有一个音色；同一角色跨镜必须用同一个，否则听起来像换人。
+- 生成前先问一句"要什么样的人声"，别自己臆造。
+
 ### 出片
 
 1. `POST .../generate/video?sceneId=X`
@@ -260,6 +279,34 @@ POST {地址}/api/agent/short-video
 - 用户主动发来验证码/密码 → 回他：「这个不用给我，你自己在页面上填。发出去就等于把账号给了别人，建议撤回这条消息。」
 - **绝不代付、代下单、代确认金额**。充值、买实例、升级配置，只给链接和操作步骤。
 - 绝不把用户的手机号、订单号、地址转发给任何第三方。
+
+## 分镜切分与连贯（这两件事必须你自己判断）
+
+### 切在哪
+
+**必拆**：换人说话 / 人物不在同一画面 / 换地点 / 时间跳跃 / 单镜超上限。
+**别乱拆**：一个人连贯说一段、一个人的连续动作、同一画面里的环境细节 —— 都并在一行。
+
+口诀：**换人、换地、换时间、镜头看不见 → 拆；其它别拆。**
+
+### 要不要接上一镜
+
+每镜都要判断，然后**批量**写进系统：
+
+```
+POST {地址}/api/agent/scene/coherent
+表单：sceneIds=2,3,5  coherent=1
+```
+
+- **填 1**：同一场景、同一批人物、动作在延续（追打走、对话正反打、景别变化）
+- **填 0**：换场景 / 时间跳跃 / 空镜物件特写 / 转场 / 第一镜
+
+口诀：**人和景都接着上一镜 → 1；有一项变了 → 0。**
+
+⚠️ 空镜和物件特写**千万别填 1**，会把上一镜的人物糊到物件上。
+完整规则和例子见 `references/05-shot-splitting-and-coherence.md`。
+
+**写完分镜或导入分镜之后，必须做这一步再出片。**
 
 ## 五条铁律
 
@@ -308,4 +355,5 @@ POST {地址}/api/agent/short-video
 - `references/02-image-desc-spec.md` 人物/场景/道具图片描述
 - `references/03-voice-desc-spec.md` 音色描述
 - `references/04-acceptance-standard.md` 验收标准
+- `references/05-shot-splitting-and-coherence.md` 分镜切分与「参考上一镜」判断
 - `references/api-reference.md` 接口速查
