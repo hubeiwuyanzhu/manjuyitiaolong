@@ -1,5 +1,5 @@
 ---
-name: 漫剧一条龙制片助理
+name: manju-yitiaolong
 description: 把小说章节做成视频分镜：写并校验分镜提示词、写人物/场景图片描述、设计音色、提交出片、抽帧验收、不合格返工（最多3次）。当用户给出 bookId / chapterId 并要求做分镜、出片、验片、重跑某一镜时使用。
 version: 1.0
 ---
