@@ -1,13 +1,15 @@
 # 接口速查（19 个）
 
-> 这些接口由本项目的 `/api/agent/**` 与已有生成接口提供，需要挂「插件 / MCP」才能调。
-> 只上传技能、不挂插件时，按 skill.md 里「没有插件工具时怎么办」输出成品。
+> 这些接口由本项目的 `/api/agent/**` 与已有生成接口提供。
+> 调用方式：`{软件地址}/api/agent/...`，软件地址由技能启动时向用户询问。
 > 统一返回体：`{"success": true|false, "msg": "失败原因", "data": {...}}`。**`success=false` 时必须读 `msg` 并据此修正，不要盲目重试。**
 
 ## 读
 
 | 工具名 | 方法与路径 | 参数 | 关键返回 |
 |---|---|---|---|
+| `listBooks` | `GET /api/agent/books` | — | `[]{bookId,bookName,chapterCount,orientation(竖屏/横屏),sceneSize,videoAspectRatio,picStyle}` |
+| `listChapters` | `GET /api/agent/book/{bookId}/chapters` | — | `bookName` `orientation` `sceneSize` `chapters[]{chapterId,chapterNumber,title,sceneCount,videoCount,done}` |
 | `getBookContext` | `GET /api/agent/book/{bookId}` | — | `picStyle` `peopleStyle` `videoStyle` `pictureSize` `sceneSize` `maxDurationPerScene` `hanziPerSecond` `people[]{name,ageType,six,desc,hasPicture,hasVoice}` |
 | `listAssets` | `GET /api/agent/book/{bookId}/assets` | — | `assetId` `type`(场景/道具) `name` `desc` `hasPicture` |
 | `listScenes` | `GET /api/agent/chapter/{chapterId}/scenes` | `bookId?` `withPrompt?`(默认 true) | `scenes[]{sceneId,sceneIndex,duration,backgroundName,hasVideo,videoUrl,speechHanzi,retryCount,prompt}` |
@@ -21,6 +23,8 @@
 
 | 工具名 | 方法与路径 | 参数 | 关键返回 |
 |---|---|---|---|
+| `createBook` | `POST /api/agent/book/create` | form: `name` `orientation=(portrait/landscape)` | `bookId` `bookName` `orientation` `sceneSize` `pictureSize` |
+| `importNovel` | `POST /api/agent/book/{bookId}/import-novel` | form: `text`(整本正文) | `imported` `totalChapters` `chapters[]{chapterNumber,title,textLength}` |
 | `saveScenePrompt` | `POST /scene/modifyPrompt` | form: `sceneId` `prompt` `backgroundName?` | `duration` `autoDuration` `overLimit` `maxDuration`。**不要传 duration**，写了行首时间会自动相加 |
 | `savePeopleDesc` | `POST /api/agent/people/{peopleId}/desc` | form: `desc` | `peopleId` `name` `desc`。只改描述，不动 name/音色 |
 | `saveAssetDesc` | `POST /api/agent/asset/{assetId}/desc` | form: `desc` | `assetId` `name` `type` `desc` |
